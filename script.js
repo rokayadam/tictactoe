@@ -17,21 +17,32 @@ document.querySelectorAll('.feld').forEach((knopf, index) => {
     knopf.addEventListener('click', () => {
 
         if (spielfeldStatus[index] === '' && spielAktiv) {
-            // 1. Symbol ins Array und auf den Button eintragen
             spielfeldStatus[index] = aktuellerSpieler;
             knopf.textContent = aktuellerSpieler;
 
-            // 2. SOFORT prüfen, ob dieser Spieler gerade gewonnen hat!
+            if (aktuellerSpieler === 'X') {
+                knopf.classList.add('spielerX');
+            } else {
+                knopf.classList.add('spielerO');
+            }
+
             gewinnPruefung();
 
-            // 3. Wenn das Spiel noch aktiv ist (kein Gewinn/Unentschieden), Spieler wechseln
             if (spielAktiv) {
                 if (aktuellerSpieler === 'X') {
                     aktuellerSpieler = 'O';
                 } else {
                     aktuellerSpieler = 'X';     
                 }
-                document.getElementById('status').textContent = 'Spieler ' + aktuellerSpieler + ' ist dran';
+                
+                const statusAnzeige = document.getElementById('status');
+                statusAnzeige.textContent = 'Spieler ' + aktuellerSpieler + ' ist dran';
+                
+                if (aktuellerSpieler === 'X') {
+                    statusAnzeige.style.color = '#3498db';
+                } else {
+                    statusAnzeige.style.color = '#e74c3c';
+                }
             }
         }
     });
@@ -40,7 +51,6 @@ document.querySelectorAll('.feld').forEach((knopf, index) => {
 function gewinnPruefung() {
     let rundeGewonnen = false;
 
-    // Alle 8 Kombinationen prüfen
     for (let i = 0; i < gewinnBedingungen.length; i++) {
         const bedingung = gewinnBedingungen[i];
         let a = spielfeldStatus[bedingung[0]];
@@ -56,25 +66,29 @@ function gewinnPruefung() {
         }
     }
 
-    // Wenn gewonnen wurde: Spiel stoppen und aktuellen Spieler als Sieger küren
     if (rundeGewonnen) {
         document.getElementById('status').textContent = 'Spieler ' + aktuellerSpieler + ' hat gewonnen!';
         spielAktiv = false;
         return;
     }
 
-    // Wenn kein Feld mehr frei ist und niemand gewonnen hat: Unentschieden
     if (!spielfeldStatus.includes('')) {
         document.getElementById('status').textContent = 'Unentschieden!';
         spielAktiv = false;
     }
 }
 
-// Neustart-Knopf
 document.getElementById('neustart').addEventListener('click', () => {
     aktuellerSpieler = "X";
     spielfeldStatus = ["", "", "", "", "", "", "", "", ""];
     spielAktiv = true;
-    document.getElementById('status').textContent = 'Spieler ' + aktuellerSpieler + ' ist dran';
-    document.querySelectorAll('.feld').forEach(knopf => knopf.textContent = '');
+    
+    const statusAnzeige = document.getElementById('status');
+    statusAnzeige.textContent = 'Spieler ' + aktuellerSpieler + ' ist dran';
+    statusAnzeige.style.color = '#3498db';
+    
+    document.querySelectorAll('.feld').forEach(knopf => {
+        knopf.textContent = '';
+        knopf.classList.remove('spielerX', 'spielerO');
+    });
 });
