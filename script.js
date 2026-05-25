@@ -52,33 +52,38 @@ document.querySelectorAll('.feld').forEach((knopf, index) => {
 
 onValue(spielRef, (snapshot) => {
     const daten = snapshot.val();
-    if (daten) {
-        spielfeldStatus = daten.feld;
-        aktuellerSpieler = daten.spieler;
-        spielAktiv = daten.aktiv;
+    
+    // HIER KORRIGIERT: Wenn die Datenbank noch leer ist, erstellen wir den ersten Spielstand
+    if (!daten) {
+        datenbankAktualisieren();
+        return;
+    }
+
+    spielfeldStatus = daten.feld;
+    aktuellerSpieler = daten.spieler;
+    spielAktiv = daten.aktiv;
+    
+    document.querySelectorAll('.feld').forEach((knopf, index) => {
+        knopf.textContent = spielfeldStatus[index];
+        knopf.classList.remove('spielerX', 'spielerO');
+        if (spielfeldStatus[index] === 'X') knopf.classList.add('spielerX');
+        if (spielfeldStatus[index] === 'O') knopf.classList.add('spielerO');
+    });
+    
+    const statusAnzeige = document.getElementById('status');
+    if (spielAktiv) {
+        statusAnzeige.textContent = 'Spieler ' + aktuellerSpieler + ' ist dran';
+        statusAnzeige.style.color = (aktuellerSpieler === 'X') ? '#3498db' : '#e74c3c';
+    } else {
+        let xHatGewonnen = checkSieg('X');
+        let oHatGewonnen = checkSieg('O');
         
-        document.querySelectorAll('.feld').forEach((knopf, index) => {
-            knopf.textContent = spielfeldStatus[index];
-            knopf.classList.remove('spielerX', 'spielerO');
-            if (spielfeldStatus[index] === 'X') knopf.classList.add('spielerX');
-            if (spielfeldStatus[index] === 'O') knopf.classList.add('spielerO');
-        });
-        
-        const statusAnzeige = document.getElementById('status');
-        if (spielAktiv) {
-            statusAnzeige.textContent = 'Spieler ' + aktuellerSpieler + ' ist dran';
-            statusAnzeige.style.color = (aktuellerSpieler === 'X') ? '#3498db' : '#e74c3c';
+        if (xHatGewonnen) {
+            statusAnzeige.textContent = 'Spieler X hat gewonnen!';
+        } else if (oHatGewonnen) {
+            statusAnzeige.textContent = 'Spieler O hat gewonnen!';
         } else {
-            let xHatGewonnen = checkSieg('X');
-            let oHatGewonnen = checkSieg('O');
-            
-            if (xHatGewonnen) {
-                statusAnzeige.textContent = 'Spieler X hat gewonnen!';
-            } else if (oHatGewonnen) {
-                statusAnzeige.textContent = 'Spieler O hat gewonnen!';
-            } else {
-                statusAnzeige.textContent = 'Unentschieden!';
-            }
+            statusAnzeige.textContent = 'Unentschieden!';
         }
     }
 });
