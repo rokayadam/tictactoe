@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, onValue } from "firebase/database";
+import { getDatabase, ref, set, onValue, update } from "firebase/database";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBK0axwfOuQJF0r9rtxPKnRW0jR1FXbXI",
@@ -15,16 +15,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const urlParams = new URLSearchParams(window.location.search);
-let raumId = urlParams.get('raum');
-
-if (!raumId) {
-    raumId = Math.floor(1000 + Math.random() * 9000).toString();
-    urlParams.set('raum', raumId);
-    window.location.search = urlParams.toString();
-}
-
-const spielRef = ref(db, 'raeume/' + raumId);
+// Globale Variablen für den Spieler-Status
+const meineSpielerId = "spieler_" + Math.floor(Math.random() * 100000);
+let aktuellerRaumId = null;
+let meineRolle = null; // "X", "O" oder "Zuschauer"
 
 let aktuellerSpieler = "X";
 let spielfeldStatus = ["", "", "", "", "", "", "", "", ""];
@@ -36,84 +30,122 @@ const gewinnBedingungen = [
     [0, 4, 8], [2, 4, 6]
 ];
 
-function datenbankAktualisieren() {
-    set(spielRef, {
-        feld: spielfeldStatus,
-        spieler: aktuellerSpieler,
-        aktiv: spielAktiv
-    });
-}
+// 1. LOBBY-LOGIK: Räume anzeigen und aktualisieren
+const raeumeRef = ref(db, 'raeume');
+onValue(raeumeRef, (snapshot) => {
+    const raeume = snapshot.val();
+    const listeElement = document.getElementById('raeume-liste');
+    listeElement.innerHTML = "";
 
-document.querySelectorAll('.feld').forEach((knopf, index) => {
-    knopf.addEventListener('click', () => {
-        if (spielfeldStatus[index] === '' && spielAktiv) {
-            spielfeldStatus[index] = aktuellerSpieler;
-            
-            gewinnPruefung();
-
-            if (spielAktiv) {
-                aktuellerSpieler = (aktuellerSpieler === 'X') ? 'O' : 'X';
-            }
-            
-            datenbankAktualisieren();
-        }
-    });
-});
-
-onValue(spielRef, (snapshot) => {
-    const daten = snapshot.val();
-    
-    if (!daten) {
-        datenbankAktualisieren();
+    if (!raeume) {
+        listeElement.innerHTML = "<p>Keine aktiven Räume. Erstelle den ersten!</p>";
         return;
     }
 
-    spielfeldStatus = daten.feld;
-    aktuellerSpieler = daten.spieler;
-    spielAktiv = daten.aktiv;
-    
-    document.querySelectorAll('.feld').forEach((knopf, index) => {
-        knopf.textContent = spielfeldStatus[index];
-        knopf.classList.remove('spielerX', 'spielerO');
-        if (spielfeldStatus[index] === 'X') knopf.classList.add('spielerX');
-        if (spielfeldStatus[index] === 'O') knopf.classList.add('spielerO');
-    });
-    
-    const statusAnzeige = document.getElementById('status');
-    if (spielAktiv) {
-        statusAnzeige.textContent = 'Spieler ' + aktuellerSpieler + ' ist dran';
-        statusAnzeige.style.color = (aktuellerSpieler === 'X') ? '#3498db' : '#e74c3c';
-    } else {
-        let xHatGewonnen = checkSieg('X');
-        let oHatGewonnen = checkSieg('O');
+    Object.keys(raeume).forEach(id => {
+        const raum = raeume[id];
+        if (!raum.einstellungen) return;
+
+        const eintrag = document.createElement('div');
+        eintrag.className = "raum-eintrag";
+
+        const istVoll = raum.spielerX && raum.spielerO;
+        const zuschauerErlaubt = raum.einstellungen.zuschauer;
         
-        if (xHatGewonnen) {
-            statusAnzeige.textContent = 'Spieler X hat gewonnen!';
-        } else if (oHatGewonnen) {
-            statusAnzeige.textContent = 'Spieler O hat gewonnen!';
-        } else {
-            statusAnzeige.textContent = 'Unentschieden!';
+        let buttonText = "Beitreten";
+        let buttonDisabled = false;
+
+        if (istVoll) {
+            if (zuschauerErlaubt) {
+                buttonText = "Zuschauen";
+            } else {
+                buttonText = "Voll";
+                buttonDisabled = true;
+            }
+        }
+
+        eintrag.innerHTML = `
+            <span><strong>${raum.einstellungen.name}</strong> ${raum.einstellungen.privat ? '🔒' : '🌐'}</span>
+            <button id="join-${id}" ${buttonDisabled ? 'disabled' : ''}>${buttonText}</button>
+        `;
+        listeElement.appendChild(eintrag);
+
+        document.getElementById(`join-${id}`).addEventListener('click', () => raumBeitreten(id, raum));
+    });
+});
+
+// 2. RAUM ERSTELLEN
+document.getElementById('btn-erstellen').addEventListener('click', () => {
+    const name = document.getElementById('raum-name-input').value.trim();
+    const passwort = document.getElementById('raum-passwort-input').value;
+    const zuschauer = document.getElementById('zuschauer-erlauben').checked;
+
+    if (!name) {
+        alert("Bitte gib einen Raum-Namen ein!");
+        return;
+    }
+
+    const neueRaumId = "raum_" + Date.now();
+    
+    set(ref(db, 'raeume/' + neueRaumId), {
+        einstellungen: {
+            name: name,
+            passwort: passwort || null,
+            privat: passwort.length > 0,
+            zuschauer: zuschauer
+        },
+        spielerX: meineSpielerId,
+        spielStand: {
+            feld: ["", "", "", "", "", "", "", "", ""],
+            spieler: "X",
+            aktiv: true
+        }
+    }).then(() => {
+        raumAktivieren(neueRaumId);
+    });
+});
+
+// 3. RAUM BEITRETEN (MIT RECHTE-PRÜFUNG)
+function raumBeitreten(id, raumDaten) {
+    if (raumDaten.einstellungen.privat) {
+        const pwEingabe = prompt("Dieser Raum ist privat. Bitte Passwort eingeben:");
+        if (pwEingabe !== raumDaten.einstellungen.passwort) {
+            alert("Falsches Passwort!");
+            return;
         }
     }
-});
 
-function gewinnPruefung() {
-    if (checkSieg(aktuellerSpieler)) {
-        spielAktiv = false;
-    } else if (!spielfeldStatus.includes('')) {
-        spielAktiv = false;
+    const updates = {};
+    if (!raumDaten.spielerX) {
+        updates['raeume/' + id + '/spielerX'] = meineSpielerId;
+    } else if (!raumDaten.spielerO && raumDaten.spielerX !== meineSpielerId) {
+        updates['raeume/' + id + '/spielerO'] = meineSpielerId;
     }
-}
-
-function checkSieg(spieler) {
-    return gewinnBedingungen.some(bedingung => {
-        return bedingung.every(index => spielfeldStatus[index] === spieler);
+    
+    update(ref(db), updates).then(() => {
+        raumAktivieren(id);
     });
 }
 
-document.getElementById('neustart').addEventListener('click', () => {
-    aktuellerSpieler = "X";
-    spielfeldStatus = ["", "", "", "", "", "", "", "", ""];
-    spielAktiv = true;
-    datenbankAktualisieren();
-});
+// 4. IN DEN RAUM WECHSELN & SPIEL STARTEN
+function raumAktivieren(id) {
+    aktuellerRaumId = id;
+    document.getElementById('lobby-ansicht').style.display = 'none';
+    document.getElementById('spiel-ansicht').style.display = 'block';
+
+    const spielRef = ref(db, 'raeume/' + id);
+    onValue(spielRef, (snapshot) => {
+        const raum = snapshot.val();
+        if (!raum) return;
+
+        document.getElementById('aktueller-raum-titel').textContent = "Raum: " + raum.einstellungen.name;
+
+        // Rollenzuweisung bestimmen
+        if (raum.spielerX === meineSpielerId) meineRolle = "X";
+        else if (raum.spielerO === meineSpielerId) meineRolle = "O";
+        else meineRolle = "Zuschauer";
+
+        const stand = raum.spielStand;
+        spielfeldStatus = stand.feld;
+        aktuellerSpieler = stand.spieler;
+        spielAktiv = stand
