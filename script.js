@@ -14,7 +14,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const spielRef = ref(db, 'spielStand');
+
+const urlParams = new URLSearchParams(window.location.search);
+let raumId = urlParams.get('raum');
+
+if (!raumId) {
+    raumId = Math.floor(1000 + Math.random() * 9000).toString();
+    urlParams.set('raum', raumId);
+    window.location.search = urlParams.toString();
+}
+
+const spielRef = ref(db, 'raeume/' + raumId);
 
 let aktuellerSpieler = "X";
 let spielfeldStatus = ["", "", "", "", "", "", "", "", ""];
@@ -53,7 +63,6 @@ document.querySelectorAll('.feld').forEach((knopf, index) => {
 onValue(spielRef, (snapshot) => {
     const daten = snapshot.val();
     
-    // HIER KORRIGIERT: Wenn die Datenbank noch leer ist, erstellen wir den ersten Spielstand
     if (!daten) {
         datenbankAktualisieren();
         return;
