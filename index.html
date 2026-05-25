@@ -1,10 +1,19 @@
 <!DOCTYPE html> 
-<html> 
+<html lang="de"> 
 <head> 
     <meta charset="UTF-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Tic-Tac-Toe Online Platform</title> 
     <link rel="stylesheet" href="style.css">
+
+    <script type="importmap">
+      {
+        "imports": {
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+          "firebase/database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"
+        }
+      }
+    </script>
 </head> 
 <body> 
     <h1>Tic-Tac-Toe Online 🕹️</h1> 
@@ -51,15 +60,6 @@
         <button id="neustart">Neustart</button>
         <button id="btn-verlassen" style="background-color: #e74c3c; color: white;">Raum verlassen</button>
     </div>
-
-    <script type="importmap">
-      {
-        "imports": {
-          "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-          "firebase/database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"
-        }
-      }
-    </script>
 
     <script type="module" src="script.js"></script>
 </body> 
