@@ -9,6 +9,75 @@ body {
     box-sizing: border-box;
 }
 
+/* LOBBY GRAPHIK-ELEMENTE */
+.lobby-box {
+    background-color: white;
+    border: 2px solid #000;
+    border-radius: 12px;
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.lobby-box h3 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+input[type="text"], input[type="password"] {
+    width: 90%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid #000;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.checkbox-group {
+    margin: 10px 0;
+    text-align: left;
+    display: inline-block;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: white;
+    border: 2px solid #000;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #f0f0f0;
+}
+
+#btn-erstellen {
+    background-color: #2ecc71;
+    color: white;
+    width: 95%;
+}
+
+#btn-erstellen:hover {
+    background-color: #27ae60;
+}
+
+.raum-eintrag {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.raum-eintrag:last-child {
+    border-bottom: none;
+}
+
+/* DEIN BEWÄHRTES SPIELFELD-DESIGN */
 #spielfeld {
     margin-top: 20px;
     display: grid;
@@ -54,11 +123,9 @@ body {
 
 #neustart {
     margin-top: 25px;
-    padding: 10px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    background-color: white;
-    border: 2px solid #000;
-    border-radius: 5px;
+}
+
+#btn-verlassen {
+    margin-top: 25px;
+    margin-left: 10px;
 }

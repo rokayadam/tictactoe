@@ -3,30 +3,54 @@
 <head> 
     <meta charset="UTF-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>Tic-Tac-Toe Spiel</title> 
+    <title>Tic-Tac-Toe Online Platform</title> 
     <link rel="stylesheet" href="style.css">
 </head> 
 <body> 
-    <h1>Tic-Tac-Toe 🕹️</h1> 
-    <p>Schön, dass ihr da seid! Das ist mein allererstes Web-Projekt.</p>
-    <p>Die Regeln kennt jeder: 2 Spieler, abwechselnd klicken, 3 in einer Reihe gewinnt.</p>
-    <p>Let's go! 🎮</p>
+    <h1>Tic-Tac-Toe Online 🕹️</h1> 
 
-    <div id="status">Spieler X ist dran</div>
+    <div id="lobby-ansicht">
+        <h2>Spiel-Lobby</h2>
+        
+        <div class="lobby-box">
+            <h3>Raum erstellen</h3>
+            <input type="text" id="raum-name-input" placeholder="Raum-Name eingeben...">
+            <input type="password" id="raum-passwort-input" placeholder="Passwort (optional)...">
+            
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="zuschauer-erlauben" checked> Zuschauer erlauben</label>
+            </div>
+            
+            <button id="btn-erstellen">Raum erstellen</button>
+        </div>
 
-    <div id="spielfeld">
-        <button class="feld" id="feld-0"></button>
-        <button class="feld" id="feld-1"></button>
-        <button class="feld" id="feld-2"></button>
-        <button class="feld" id="feld-3"></button>
-        <button class="feld" id="feld-4"></button>
-        <button class="feld" id="feld-5"></button>
-        <button class="feld" id="feld-6"></button>
-        <button class="feld" id="feld-7"></button>
-        <button class="feld" id="feld-8"></button>
+        <div class="lobby-box">
+            <h3>Verfügbare Räume</h3>
+            <div id="raeume-liste">
+                <p>Suche nach aktiven Räumen...</p>
+            </div>
+        </div>
     </div>
 
-    <button id="neustart">Neustart</button>
+    <div id="spiel-ansicht" style="display: none;">
+        <h2 id="aktueller-raum-titel">Raum: -</h2>
+        <div id="status">Warte auf Spieler...</div>
+
+        <div id="spielfeld">
+            <button class="feld" id="feld-0"></button>
+            <button class="feld" id="feld-1"></button>
+            <button class="feld" id="feld-2"></button>
+            <button class="feld" id="feld-3"></button>
+            <button class="feld" id="feld-4"></button>
+            <button class="feld" id="feld-5"></button>
+            <button class="feld" id="feld-6"></button>
+            <button class="feld" id="feld-7"></button>
+            <button class="feld" id="feld-8"></button>
+        </div>
+
+        <button id="neustart">Neustart</button>
+        <button id="btn-verlassen" style="background-color: #e74c3c; color: white;">Raum verlassen</button>
+    </div>
 
     <script type="importmap">
       {
